@@ -1,0 +1,43 @@
+General rules to navigating Ha’s code
+Each project has a source code folder
+Within each folders, there’s a jobs folder that contains all the files used for submitting jobs to hoffman2. Don’t have to look at this folder yet if you just want to figure out what the actual analysis code is doing
+Each analysis tends to have their own code folder
+Within each analysis folder, there tends to have a <something>_helper.py file that contains some useful functions for file management. This file is usually imported into each of the other .py files in the folder.
+Within each .py file, there’s, almost always, a main function and an usage function. Everything starts with main
+
+source_pete
+|__create_plots: ignore for now
+|__download_data: this was initially used to download ROADMAP data for this project
+|__jobs: where files of jobs submitted to hoffman2 are found
+|__process_raw_data: some files that was used initially to evaluate the raw data
+|__train_and_evaluate: functions to train the model to predict chromatin state in one sample using data of chromatin states in the other samples
+|__|__posterior_based: functions to do training of model based on chromHMM posterior probabilities
+|__|__segment_based: functions to do training of models based solely on the segmentation of chromatin state at each of the sample 
+|/u/home/h/havu73/project-ernst/source/chromHMM_utilities/ : folder containing some common functions that can be helpful in processing data from ChromHMM. Not all of them are relevant for Zane's project. But some functions will be really helpful.
+
+DATA FOLDER: /u/home/h/havu73/project-ernst/diff_pete/roadmap
+This directory contains data of input and output for model trainings, and evaluation of different model training
+- List of regions where we collect data from each samples for model training. These regions are selected randomly in the genome (10% genome_wide): /u/home/h/havu73/project-ernst/diff_pete/roadmap/sample_genome_regions
+- <cell_group>.list: each line is one sample name of this cell group
+- <cell_group> folder: containing data of all model training in this folder. 
+	|__baseline: data for training baseline model
+	|__chromHMM_posterior: _____ chromHMM_posterior ____ 
+	|__multi_logistic: _____ multilogisitc regression based on segmentation data (not based on posterior ChromHMM data) ____
+	|__all_replicates_segmentation.bed.gz: chromHMM posterior probabilities for all samples in this cell group that are used for model training. These are regions denoted in /u/home/h/havu73/project-ernst/diff_pete/roadmap/sample_genome_regions (10% randomly selected regions)
+- Within each 	<cell_group> folder/<model_name: baseline, chromHMM_posterior, multi_logistic>: 
+|__ val_<sampleID>: prediction of segmentation of this sample, based on average prediction of other samples that are trained based on the other n-2 samples. n: number of samples in this cell groups.
+|__|__ pred_<sampleID>: prediction of segmentation of this sample based on n-2 samples.
+|__|__ average_predictions: average of state assignment matrix based on data from all the pred_<sampleID> folders. This is the result of source_pete/train_and_evaluate/<method>_based/run_cross_validation_pipeline_<method>_based.py.
+|__|__ roc: tpr_fpr_all_states.txt.gz: file containing the calculation of prediction performance for this val_<sampleID>. This is the result of source_pete/train_and_evaluate/calculate_ROC_one_state.py
+|__|__ prediction_performance: confusion matrix of size <num_state> * <num_state>: each entry is the proportion of the positions truthfully of state <row_index> that gets assigned to state <column_index>. Results of source_pete/train_and_evaluate/calculate_regression_performance.py
+- /u/home/h/havu73/project-ernst/source_pete/train_and_evaluate/sample_genome.py : Code to collect data from the cell types that we are interested in collecting (ex: cell types associated with blood) , put all of that data into one file for later use in model training 
+
+RAW DATA FOLDER: /u/home/h/havu73/project-ernst/data/roadmap_epigenome/18_core_K27ac_model_downloaded 
+We stored data downloaded from roadmap here
+
+For meeting of 03032020: I would start with reading the file 
+- /u/home/h/havu73/project-ernst/source_pete/train_and_evaluate/get_sample_regions_segmentation_all_ct.sh
+- /u/home/h/havu73/project-ernst/source_pete/train_and_evaluate/do_validation_jobs.sh 
+- /u/home/h/havu73/project-ernst/source_pete/train_and_evaluate/get_summary_statistics_for_cell_group.sh
+
+These files will lead you to some other python files. I would also look at these python files in the usage functions, the main functions, and if you prefer, the comments. I tried to comment along the coding process what each function does.
